@@ -1,0 +1,116 @@
+{
+  "uid": "spring-boot-poc",
+  "title": "Spring Boot POC - Overview",
+  "tags": ["spring-boot", "poc"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Request rate (req/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"observability-poc\", uri!~\"/actuator.*\"}[1m])) by (uri)",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Error rate - 5xx (req/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"observability-poc\", status=~\"5..\"}[1m])) by (uri)",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "p95 latency (seconds)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"observability-poc\", uri!~\"/actuator.*\"}[1m])) by (le, uri))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "JVM heap used (bytes)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(jvm_memory_used_bytes{application=\"observability-poc\", area=\"heap\"})",
+          "legendFormat": "heap used"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(jvm_memory_max_bytes{application=\"observability-poc\", area=\"heap\"})",
+          "legendFormat": "heap max"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Products in database",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "products_total{application=\"observability-poc\"}" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Products created (total)",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "products_created_total{application=\"observability-poc\"}" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Live threads",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "jvm_threads_live_threads{application=\"observability-poc\"}" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "gauge",
+      "title": "Process CPU usage",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "process_cpu_usage{application=\"observability-poc\"}" }
+      ]
+    }
+  ]
+}

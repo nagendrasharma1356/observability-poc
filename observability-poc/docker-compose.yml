@@ -1,0 +1,58 @@
+services:
+  # ---------- Grafana side ----------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: poc-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # lets the container reach the app running in IntelliJ
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: poc-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+  # ---------- SonarQube side ----------
+  sonar-db:
+    image: postgres:16
+    container_name: poc-sonar-db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonarqube
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: poc-sonarqube
+    depends_on:
+      - sonar-db
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonar-db:5432/sonarqube
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+
+volumes:
+  sonar_db_data:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:
